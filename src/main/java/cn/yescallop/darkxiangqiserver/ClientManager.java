@@ -3,38 +3,22 @@ package cn.yescallop.darkxiangqiserver;
 import cn.yescallop.darkxiangqiserver.packet.StartGamePacket;
 import io.netty.channel.Channel;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ClientManager {
     private static ClientManager instance = new ClientManager();
-    private final Map<String, Client> clients = new ConcurrentHashMap<>();
     private static Random random = new Random();
+    private final Map<String, Client> clients = new ConcurrentHashMap<>();
 
     private ClientManager() {
     }
 
     public static ClientManager getInstance() {
         return instance;
-    }
-
-    public void addClient(Channel channel) {
-        Client client = new Client(channel);
-        System.out.println(channel.remoteAddress().toString() + " connected");
-        for (Client enemy : this.clients.values()) {
-            if (!enemy.isGaming()) {
-                client.startGame(enemy);
-                StartGamePacket packet = new StartGamePacket();
-                packet.first = random.nextBoolean();
-                packet.data = generateRandomPieceData();
-                client.sendPacket(packet);
-                packet.first = !packet.first;
-                enemy.sendPacket(packet);
-                System.out.println(channel.remoteAddress().toString() + " connected to " + enemy.address().toString());
-                break;
-            }
-        }
-        this.clients.put(channel.remoteAddress().toString(), client);
     }
 
     private static byte[][] generateRandomPieceData() {
@@ -58,6 +42,25 @@ public class ClientManager {
         data[indexes.remove(random.nextInt(1))] = new byte[]{6, 0};
         data[indexes.remove(0)] = new byte[]{6, 1};
         return data;
+    }
+
+    public void addClient(Channel channel) {
+        Client client = new Client(channel);
+        System.out.println(channel.remoteAddress().toString() + " connected");
+        for (Client enemy : this.clients.values()) {
+            if (!enemy.isGaming()) {
+                client.startGame(enemy);
+                StartGamePacket packet = new StartGamePacket();
+                packet.first = random.nextBoolean();
+                packet.data = generateRandomPieceData();
+                client.sendPacket(packet);
+                packet.first = !packet.first;
+                enemy.sendPacket(packet);
+                System.out.println(channel.remoteAddress().toString() + " connected to " + enemy.address().toString());
+                break;
+            }
+        }
+        this.clients.put(channel.remoteAddress().toString(), client);
     }
 
     public void removeClient(Channel channel) {

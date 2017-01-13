@@ -22,12 +22,12 @@ public class Server {
         System.out.println("Binded to " + interfaz + ":" + port);
     }
 
-    public void close() {
-        this.socket.close();
-    }
-
     public static Server getInstance() {
         return instance;
+    }
+
+    public void close() {
+        this.socket.close();
     }
 
     public void handlePacket(Client client, Packet packet) {
