@@ -16,15 +16,17 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 public class TCPServerSocket extends ChannelInboundHandlerAdapter {
 
     protected ServerBootstrap bootstrap;
-    protected EventLoopGroup group;
+    protected EventLoopGroup bossGroup;
+    protected EventLoopGroup workerGroup;
     protected Channel channel;
 
     public TCPServerSocket(int port, String interfaz) {
         try {
             bootstrap = new ServerBootstrap();
-            group = new NioEventLoopGroup();
+            bossGroup = new NioEventLoopGroup();
+            workerGroup = new NioEventLoopGroup();
             bootstrap
-                    .group(group)
+                    .group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
                     .option(ChannelOption.SO_BACKLOG, 128)
                     .option(ChannelOption.TCP_NODELAY, true)
@@ -43,7 +45,8 @@ public class TCPServerSocket extends ChannelInboundHandlerAdapter {
     }
 
     public void close() {
-        this.group.shutdownGracefully();
+        this.bossGroup.shutdownGracefully();
+        this.workerGroup.shutdownGracefully();
         try {
             this.channel.closeFuture().sync();
         } catch (Exception e) {
@@ -81,6 +84,7 @@ public class TCPServerSocket extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        throw new RuntimeException(cause);
+        ctx.close();
+        cause.printStackTrace();
     }
 }
